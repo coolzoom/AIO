@@ -5,8 +5,39 @@ local error, tostring, pairs, type, floor, huge, concat = error, tostring, pairs
 
 local dump_type = {}
 
+-- 
+function getStringLength(inputstr)
+    if not inputstr or type(inputstr) ~= "string" or string.len(inputstr) <= 0 then
+        return nil
+    end
+    local length = 0  -- 
+    local i = 1
+    while true do
+        local curByte = string.byte(inputstr, i)
+        local byteCount = 1
+        if curByte > 239 then
+            byteCount = 4  -- 
+        elseif curByte > 223 then
+            byteCount = 3  -- 
+        elseif curByte > 128 then
+            byteCount = 2  -- 
+        else
+            byteCount = 1  -- 
+        end
+        -- local char = string.sub(inputstr, i, i + byteCount - 1)
+        -- print(char)  -- 
+        i = i + byteCount
+        length = length + 1
+        if i > string.len(inputstr) then
+            break
+        end
+    end
+    return length
+end
+--
+
 function dump_type:string(nmemo, memo, acc)
-	local nacc = #acc
+	local nacc = getStringLength(acc)
 	acc[nacc + 1] = '"'
 	acc[nacc + 2] = self:gsub('"', '""')
 	acc[nacc + 3] = '"'
@@ -14,7 +45,7 @@ function dump_type:string(nmemo, memo, acc)
 end
 
 function dump_type:number(nmemo, memo, acc)
-	acc[#acc + 1] = ("%.17g"):format(self)
+	acc[getStringLength(acc) + 1] = ("%.17g"):format(self)
 	return nmemo
 end
 
@@ -28,41 +59,41 @@ function dump_type:table(nmemo, memo, acc)
 	nmemo = nmemo + 1
     ]]
 	memo[self] = nmemo
-	acc[#acc + 1] = '{'
-	local nself = #self
+	acc[getStringLength(acc) + 1] = '{'
+	local nself = getStringLength(self)
 	for i = 1, nself do -- don't use ipairs here, we need the gaps
 		nmemo = dump_object(self[i], nmemo, memo, acc)
-		acc[#acc + 1] = ','
+		acc[getStringLength(acc) + 1] = ','
 	end
 	for k, v in pairs(self) do
 		if type(k) ~= 'number' or floor(k) ~= k or k < 1 or k > nself then
 			nmemo = dump_object(k, nmemo, memo, acc)
-			acc[#acc + 1] = ':'
+			acc[getStringLength(acc) + 1] = ':'
 			nmemo = dump_object(v, nmemo, memo, acc)
-			acc[#acc + 1] = ','
+			acc[getStringLength(acc) + 1] = ','
 		end
 	end
-	acc[#acc] = acc[#acc] == '{' and '{}' or '}'
+	acc[getStringLength(acc)] = acc[getStringLength(acc)] == '{' and '{}' or '}'
 	return nmemo
 end
 
 function dump_object(object, nmemo, memo, acc)
 	if object == true then
-		acc[#acc + 1] = 't'
+		acc[getStringLength(acc) + 1] = 't'
 	elseif object == false then
-		acc[#acc + 1] = 'f'
+		acc[getStringLength(acc) + 1] = 'f'
 	elseif object == nil then
-		acc[#acc + 1] = 'n'
+		acc[getStringLength(acc) + 1] = 'n'
 	elseif object ~= object then
 		if (''..object):sub(1,1) == '-' then
-			acc[#acc + 1] = 'N'
+			acc[getStringLength(acc) + 1] = 'N'
 		else
-			acc[#acc + 1] = 'Q'
+			acc[getStringLength(acc) + 1] = 'Q'
 		end
 	elseif object == huge then
-		acc[#acc + 1] = 'I'
+		acc[getStringLength(acc) + 1] = 'I'
 	elseif object == -huge then
-		acc[#acc + 1] = 'i'
+		acc[getStringLength(acc) + 1] = 'i'
 	else
 		local t = type(object)
 		if not dump_type[t] then
@@ -154,7 +185,7 @@ local expect_object_head = {
 	['{'] = function(string, i, tables)
 		local nt, k, v = {}
 		local j = 1
-		tables[#tables + 1] = nt
+		tables[getStringLength(tables) + 1] = nt
 		if string:sub(i, i) == '}' then
 			return nt, i + 1
 		end
@@ -209,7 +240,7 @@ expect_object = function(string, i, tables)
 end
 
 function M.loads(string, maxsize)
-	if #string > (maxsize or 10000) then
+	if getStringLength(string) > (maxsize or 10000) then
 		error 'input too large'
 	end
 	return (expect_object(string, 1, {}))

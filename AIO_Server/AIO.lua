@@ -146,7 +146,7 @@ msg = msg:Clear()
 -- Returns self
 msg = msg:Assemble()
 ]=]
-
+print("loading AIO!")
 -- Try to avoid multiple versions of AIO
 assert(not AIO, "AIO is already loaded. Possibly different versions!")
 

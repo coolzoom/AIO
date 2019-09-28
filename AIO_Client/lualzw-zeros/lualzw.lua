@@ -36,6 +36,37 @@ for i = 0, 255 do
     basedictdecompress[iic] = ic
 end
 
+-- 
+function getStringLength(inputstr)
+    if not inputstr or type(inputstr) ~= "string" or string.len(inputstr) <= 0 then
+        return nil
+    end
+    local length = 0  -- 
+    local i = 1
+    while true do
+        local curByte = string.byte(inputstr, i)
+        local byteCount = 1
+        if curByte > 239 then
+            byteCount = 4  -- 
+        elseif curByte > 223 then
+            byteCount = 3  -- 
+        elseif curByte > 128 then
+            byteCount = 2  -- 
+        else
+            byteCount = 1  -- 
+        end
+        -- local char = string.sub(inputstr, i, i + byteCount - 1)
+        -- print(char)  -- 
+        i = i + byteCount
+        length = length + 1
+        if i > string.len(inputstr) then
+            break
+        end
+    end
+    return length
+end
+--
+
 local function dictAddA(str, dict, a, b)
     if a >= 256 then
         a, b = 1, b+1
@@ -53,7 +84,7 @@ local function compress(input)
     if type(input) ~= "string" then
         return nil, "string expected, got "..type(input)
     end
-    local len = #input
+    local len = getStringLength(input)
     if len <= 1 then
         return "u"..input
     end
@@ -74,7 +105,7 @@ local function compress(input)
                 return nil, "algorithm error, could not fetch word"
             end
             result[n] = write
-            resultlen = resultlen + #write
+            resultlen = resultlen + getStringLength(write)
             n = n+1
             if  len <= resultlen then
                 return "u"..input
@@ -86,7 +117,7 @@ local function compress(input)
         end
     end
     result[n] = basedictcompress[word] or dict[word]
-    resultlen = resultlen+#result[n]
+    resultlen = resultlen+getStringLength(result[n])
     n = n+1
     if  len <= resultlen then
         return "u"..input
@@ -112,7 +143,7 @@ local function decompress(input)
         return nil, "string expected, got "..type(input)
     end
 
-    if #input < 1 then
+    if getStringLength(input) < 1 then
         return nil, "invalid input - not a compressed string"
     end
 
@@ -123,7 +154,7 @@ local function decompress(input)
         return nil, "invalid input - not a compressed string"
     end
     input = sub(input, 2)
-    local len = #input
+    local len = getStringLength(input)
 
     if len < 2 then
         return nil, "invalid input - not a compressed string"

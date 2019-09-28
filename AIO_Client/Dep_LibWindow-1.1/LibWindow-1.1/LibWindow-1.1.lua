@@ -11,9 +11,18 @@ License: Public Domain
 ]]
 
 local MAJOR = "LibWindow-1.1"
-local MINOR = tonumber(("$Revision: 8 $"):match("(%d+)"))
+-- local MINOR = tonumber(("$Revision: 8 $"):match("(%d+)"))
+local MINOR = "8"
 
-local lib = LibStub:NewLibrary(MAJOR,MINOR)
+	function NewLibrary(major, minor)
+
+		return major, minor
+	end
+
+local lib = {} -- NewLibrary(MAJOR,MINOR)
+
+LibStub = lib
+
 if not lib then return end
 
 local min,max,abs = min,max,abs
@@ -68,7 +77,7 @@ end
 
 
 lib.utilFrame:SetScript("OnUpdate", function(this)
-	this:Hide()
+	-- this:Hide()
 	for frame,_ in pairs(lib.delayedSavePosition) do
 		lib.delayedSavePosition[frame] = nil
 		lib.SavePosition(frame)
@@ -231,15 +240,17 @@ function lib.OnDragStop(frame)
 	end
 end
 
-local function onDragStart(...) return lib.OnDragStart(...) end  -- upgradable
-local function onDragStop(...) return lib.OnDragStop(...) end  -- upgradable
+-- local function onDragStart(...) return lib.OnDragStart(...) end  -- upgradable
+-- local function onDragStop(...) return lib.OnDragStop(...) end  -- upgradable
 
 mixins["MakeDraggable"]=true
 function lib.MakeDraggable(frame)
 	assert(lib.windowData[frame])
 	frame:SetMovable(true)
-	frame:SetScript("OnDragStart", onDragStart)
-	frame:SetScript("OnDragStop", onDragStop)
+	-- frame:SetScript("OnDragStart", onDragStart)
+	-- frame:SetScript("OnDragStop", onDragStop)
+	frame:SetScript("OnDragStart", frame.StartMoving())
+	frame:SetScript("OnDragStop", frame.StopMovingOrSizing())
 	frame:RegisterForDrag("LeftButton")
 end
 
@@ -258,11 +269,21 @@ function lib.OnMouseWheel(frame, dir)
 	lib.SetScale(frame, scale)
 end
 
-local function onMouseWheel(...) return lib.OnMouseWheel(...) end  -- upgradable
+-- local function onMouseWheel(...) return lib.OnMouseWheel(...) end  -- upgradable
 
 mixins["EnableMouseWheelScaling"]=true
 function lib.EnableMouseWheelScaling(frame)
-	frame:SetScript("OnMouseWheel", onMouseWheel)
+	-- frame:SetScript("OnMouseWheel", onMouseWheel)
+	frame:SetScript("OnMouseWheel", function(this, dir)
+	local scale = getStorage(frame, "scale")
+	if dir<0 then
+		scale=max(scale*0.9, 0.1)
+	else
+		scale=min(scale/0.9, 3)
+	end
+	lib.SetScale(frame, scale)
+	end
+    )
 end
 
 

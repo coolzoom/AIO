@@ -1,4 +1,4 @@
-## Interface: 30300
+## Interface: 11200
 ## Title: AIO
 ## Notes: Allows sending addons from server to client and allows client-server communication.
 ## Author: Rochet2 <https://github.com/Rochet2>
